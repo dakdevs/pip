@@ -10,7 +10,7 @@ Command-N makes a new active conversation; prior work continues in the menu bar 
 
 Global persistent settings: main model, reasoning, Fast mode, shortcuts, voice behavior. Command-left/right changes supported reasoning levels; Command-F toggles Fast mode while composing. Optional first-turn completion classifier defaults enabled; use the selected available classifier model (currently Luna with low reasoning and Fast support) to dismiss only successful action completions without useful output. Uncertain outcomes, answers, errors, pending requests, and any conversation with a second user message remain visible. Dismissed conversations remain recoverable.
 
-Guided setup covers Codex installation/sign-in, model choices, global hotkey conflicts, microphone, local dictation model, and computer-use readiness. Current Mac first; no publishing or notarization in this work.
+Guided setup covers Codex installation/sign-in, model choices, global hotkey conflicts, microphone, local dictation model, and computer-use readiness. Date-versioned GitHub releases and signed Sparkle updates are supported; Apple notarization is optional until distribution credentials are configured.
 
 ## Implementation sequence
 
@@ -45,6 +45,10 @@ Pip keeps conversation metadata, drafts, and a transcript cache under Applicatio
 - Codex 0.154.0 is the verified backend. Experimental realtime audio does not provide a verified dictation contract, so Pip uses FluidAudio 0.15.7 and local Parakeet v3.
 - The first-turn classifier runs in a separate ephemeral process with configured tools/plugins disabled and conservative structured output; failures keep the response visible.
 - Model installation exposes actual FluidAudio progress, then preparation/loading, then ready. Cached models load at launch without another download.
+
+## Release and updater boundary
+
+`AppUpdater.swift` owns Sparkle lifecycle, Settings bindings, and idle installation deferral. `script/package_app.sh` is shared by local and CI packaging; `build_release.sh` generates signed archives and feeds. Date allocation and publication live in `.github/workflows/release.yml`. Development bundles opt out of updates. Private update keys remain in Keychain/GitHub Secrets, with only the public key checked in. See `docs/releases.md` for bootstrap, versions, signing prerequisites, and verification limits.
 
 ## Outcomes
 

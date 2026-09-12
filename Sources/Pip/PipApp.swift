@@ -15,6 +15,7 @@ struct PipApp {
 @MainActor final class PipAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let store = AppStore()
     private var panel: PanelController!
+    private lazy var appUpdater = AppUpdater(store: store)
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private let shortcut = GlobalShortcut()
@@ -29,13 +30,14 @@ struct PipApp {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.image = PipIconName.menuBar.image()
         statusItem.button?.toolTip = "Pip"
-        let menu = NSMenu(); menu.delegate = self; statusItem.menu = menu
+        let menu = NSMenu(); menu.autoenablesItems = false; menu.delegate = self; statusItem.menu = menu
         store.onPresentationChange = { [weak self] in self?.panel.present() }
         store.onMenuChange = { [weak self] in self?.updateStatus() }
         store.onSettingsChange = { [weak self] in self?.registerShortcut() }
         shortcut.onPress = { [weak self] in self?.shortcutPressed() }
         shortcut.onRelease = { [weak self] in self?.shortcutReleased() }
         registerShortcut()
+        appUpdater.start()
         // Standard editing commands support the native text views and setup fields.
         let mainMenu = NSMenu()
         let appMenu = NSMenu(); appMenu.addItem(withTitle: "Quit Pip", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -73,6 +75,7 @@ struct PipApp {
         else if shortcutBeganOpen { store.minimize() }
     }
     private func updateStatus() {
+        appUpdater.activityChanged()
         let attention = !store.requests.isEmpty
         let unread = store.conversations.contains { $0.unread }
         statusItem.button?.image = PipIconName.menuBar.image()
@@ -96,6 +99,9 @@ struct PipApp {
         menu.addItem(.separator())
         add(menu, "Settings…", #selector(showSettings))
         add(menu, "Setup…", #selector(showSetup))
+        let update = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+        update.target = self; update.isEnabled = appUpdater.canCheckForUpdates
+        menu.addItem(update)
         add(menu, "Quit Pip", #selector(quit))
     }
     private func add(_ menu: NSMenu, _ title: String, _ action: Selector) { let item = NSMenuItem(title: title, action: action, keyEquivalent: ""); item.target = self; menu.addItem(item) }
@@ -104,6 +110,7 @@ struct PipApp {
     @objc private func openConversation(_ sender: NSMenuItem) { if let value = sender.representedObject as? String, let id = UUID(uuidString: value) { store.select(id) } }
     @objc private func showSettings() { openSettings(onboarding: false) }
     @objc private func showSetup() { openSettings(onboarding: true) }
+    @objc private func checkForUpdates() { appUpdater.checkForUpdates() }
     @objc private func quit() { NSApp.terminate(nil) }
     private func openSettings(onboarding: Bool) {
         store.minimize()
@@ -113,11 +120,11 @@ struct PipApp {
             settingsWindow?.titlebarAppearsTransparent = true; settingsWindow?.center()
         }
         settingsWindow?.title = onboarding ? "Welcome to Pip" : "Pip Settings"
-        settingsWindow?.contentView = NSHostingView(rootView: SettingsView(store: store, onboarding: onboarding) { [weak self] in self?.settingsWindow?.close(); self?.store.show() })
+        settingsWindow?.contentView = NSHostingView(rootView: SettingsView(store: store, appUpdater: appUpdater, onboarding: onboarding) { [weak self] in self?.settingsWindow?.close(); self?.store.show() })
         settingsWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if store.busyCount > 0 {
+        if store.busyCount > 0 || store.voiceBusy {
             let alert = NSAlert(); alert.messageText = "Quit while Pip is working?"; alert.informativeText = "Running work will stop. Your conversations stay in history."
             alert.addButton(withTitle: "Keep Working"); alert.addButton(withTitle: "Quit Pip")
             if alert.runModal() != .alertSecondButtonReturn { return .terminateCancel }

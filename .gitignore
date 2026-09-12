@@ -9,3 +9,11 @@ dist/
 .env.*
 !.env.example
 dist-stage.*/
+
+# Release artifacts and signing material
+release-output/
+*.p12
+*.p8
+*.key
+*.keychain-db
+__pycache__/

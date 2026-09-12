@@ -3,6 +3,7 @@ import AVFoundation
 
 struct SettingsView: View {
     @Bindable var store: AppStore
+    @Bindable var appUpdater: AppUpdater
     let onboarding: Bool
     var onComplete: () -> Void
     @State private var page = 0
@@ -29,7 +30,7 @@ struct SettingsView: View {
                 }.padding(24)
             } else {
                 TabView {
-                    Form { connectionSection; modelSection; behaviorSection }.formStyle(.grouped).tabItem { PipLabel("General", icon: .settings) }
+                    Form { connectionSection; modelSection; behaviorSection; updatesSection }.formStyle(.grouped).tabItem { PipLabel("General", icon: .settings) }
                     Form { voiceSection }.formStyle(.grouped).tabItem { PipLabel("Voice", icon: .voice) }
                     Form { shortcutSection; extraShortcuts }.formStyle(.grouped).tabItem { PipLabel("Shortcuts", icon: .keyboard) }
                     Form { toolsSection }.formStyle(.grouped).tabItem { PipLabel("Tools", icon: .tools) }
@@ -38,6 +39,19 @@ struct SettingsView: View {
         }
         .frame(minWidth: 580, minHeight: 570)
         .onChange(of: store.preferences.model) { _, _ in store.validateModel() }
+    }
+    private var updatesSection: some View {
+        Section("Updates") {
+            LabeledContent("Version", value: appUpdater.version)
+            Toggle("Automatically check for updates", isOn: $appUpdater.automaticallyChecks)
+                .disabled(!appUpdater.isEnabled)
+            Toggle("Download updates and install when I quit", isOn: $appUpdater.automaticallyDownloads)
+                .disabled(!appUpdater.isEnabled || !appUpdater.automaticallyChecks)
+            Button("Check for Updates…") { appUpdater.checkForUpdates() }
+                .disabled(!appUpdater.canCheckForUpdates)
+            Text(appUpdater.status).font(.caption).foregroundStyle(.secondary)
+            Link("Release history", destination: URL(string: "https://github.com/dakdevs/pip/releases")!)
+        }
     }
     private var connectionSection: some View {
         Section("Connect Codex") {

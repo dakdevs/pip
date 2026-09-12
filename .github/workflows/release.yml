@@ -1,0 +1,87 @@
+name: Release
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - 'config/**'
+      - 'script/**'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: pip-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'dakdevs/pip' && github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Verify
+        run: |
+          python3 -m unittest discover -s script/tests
+          swift test
+      - name: Allocate date version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag --list > "$RUNNER_TEMP/pip-tags.txt"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name' >> "$RUNNER_TEMP/pip-tags.txt"
+          version="$(python3 script/release_version.py < "$RUNNER_TEMP/pip-tags.txt")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Configure optional Apple signing
+        env:
+          APPLE_DEVELOPER_ID_P12: ${{ secrets.APPLE_DEVELOPER_ID_P12 }}
+          APPLE_DEVELOPER_ID_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}
+        run: script/configure_ci_signing.sh
+      - name: Build and sign update
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          test -n "$SPARKLE_PRIVATE_KEY" || { echo 'Configure SPARKLE_PRIVATE_KEY before releasing.' >&2; exit 1; }
+          umask 077
+          export SPARKLE_PRIVATE_KEY_FILE="$RUNNER_TEMP/pip-update-signing-key"
+          trap 'rm -f "$SPARKLE_PRIVATE_KEY_FILE"' EXIT
+          python3 -c 'import os,pathlib; pathlib.Path(os.environ["SPARKLE_PRIVATE_KEY_FILE"]).write_text(os.environ["SPARKLE_PRIVATE_KEY"])'
+          unset SPARKLE_PRIVATE_KEY
+          script/build_release.sh "$RELEASE_VERSION" "$RUNNER_TEMP/pip-release"
+      - name: Publish complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ "${PIP_NOTARIZE:-false}" = true ]; then
+            echo 'Developer ID signed and notarized for macOS 26+ on Apple Silicon.' > "$RUNNER_TEMP/pip-notes.md"
+          else
+            echo 'Developer preview for macOS 26+ on Apple Silicon. The app is ad-hoc signed, not Apple-notarized; macOS may require explicit approval on first launch. Update archives and the update feed are signed with the Pip Ed25519 key.' > "$RUNNER_TEMP/pip-notes.md"
+          fi
+          gh release create "$RELEASE_VERSION" \
+            "$RUNNER_TEMP/pip-release/Pip-$RELEASE_VERSION-arm64.zip" \
+            "$RUNNER_TEMP/pip-release/appcast.xml" \
+            "$RUNNER_TEMP/pip-release/SHA256SUMS" \
+            --target "$GITHUB_SHA" --title "Pip $RELEASE_VERSION" \
+            --draft --generate-notes --notes-file "$RUNNER_TEMP/pip-notes.md"
+          gh release edit "$RELEASE_VERSION" --draft=false --latest
+      - name: Remove temporary signing keychain
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/pip-signing.keychain-db" ]; then
+            security delete-keychain "$RUNNER_TEMP/pip-signing.keychain-db"
+          fi

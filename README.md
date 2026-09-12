@@ -24,7 +24,7 @@ Press **Command–Space**, type or speak, and let Pip get to work. Collapse it i
 
 ## Get started
 
-Pip is an **early developer preview**. Build it locally; a signed, notarized download is not available yet.
+Pip is an **early developer preview**. Download a date-versioned build from [GitHub Releases](https://github.com/dakdevs/pip/releases/latest), or build locally. Preview downloads are not yet Apple-notarized; macOS may require explicit approval on first launch.
 
 You'll need:
 
@@ -41,6 +41,8 @@ cd pip
 The script builds and launches `dist/Pip.app`. Guided setup connects Codex, checks sign-in, configures shortcuts, and prepares optional local dictation. Once built, you can open `dist/Pip.app` directly.
 
 Command–Space is also Spotlight's default. Change Spotlight's shortcut in System Settings, or choose a different shortcut for Pip during setup.
+
+Release builds check GitHub for signed updates automatically. Use **Check for Updates…** in the menu bar, or configure automatic checks and downloads in Settings. Updates wait for active work before restarting Pip.
 
 ## Keyboard controls
 
@@ -83,4 +85,4 @@ PIP_TEST_PARAKEET=1 swift test --filter ParakeetIntegrationTests
 
 The Codex integration checks use your subscription. The Parakeet check downloads model assets if needed and transcribes a public speech fixture without recording the microphone.
 
-For implementation details, see the [interaction contract and architecture](docs/implementation.md), [dictation notes](docs/dictation.md), and [icon sources](docs/icons.md). Interface icons use selected [Hugeicons](https://hugeicons.com/) artwork; the supplied license notice is included with the assets.
+For implementation details, see the [interaction contract and architecture](docs/implementation.md), [dictation notes](docs/dictation.md), and [icon sources](docs/icons.md), and [release/updater guide](docs/releases.md). Interface icons use selected [Hugeicons](https://hugeicons.com/) artwork; the supplied license notice is included with the assets.
