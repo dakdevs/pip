@@ -29,8 +29,9 @@ Pip is an **early developer preview**. Download a date-versioned build from [Git
 You'll need:
 
 - An Apple Silicon Mac running **macOS 26 or later**.
-- Xcode with a **Swift 6.2 or later** toolchain selected.
 - The [Codex CLI](https://developers.openai.com/codex/cli) and a ChatGPT account with Codex access.
+
+To build from source, you'll also need Xcode with a **Swift 6.2 or later** toolchain selected:
 
 ```sh
 git clone https://github.com/dakdevs/pip.git
@@ -85,4 +86,4 @@ PIP_TEST_PARAKEET=1 swift test --filter ParakeetIntegrationTests
 
 The Codex integration checks use your subscription. The Parakeet check downloads model assets if needed and transcribes a public speech fixture without recording the microphone.
 
-For implementation details, see the [interaction contract and architecture](docs/implementation.md), [dictation notes](docs/dictation.md), and [icon sources](docs/icons.md), and [release/updater guide](docs/releases.md). Interface icons use selected [Hugeicons](https://hugeicons.com/) artwork; the supplied license notice is included with the assets.
+For implementation details, see the [interaction contract and architecture](docs/implementation.md), [dictation notes](docs/dictation.md), [icon sources](docs/icons.md), and [release/updater guide](docs/releases.md). Interface icons use selected [Hugeicons](https://hugeicons.com/) artwork; the supplied license notice is included with the assets.
