@@ -1,0 +1,11 @@
+.build/
+dist/
+.DS_Store
+.swiftpm/
+*.log
+
+# Local credentials and transient build staging
+.env
+.env.*
+!.env.example
+dist-stage.*/
