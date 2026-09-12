@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Selected Hugeicons vectors exported from the user's Swift asset download.
 enum PipIconName: String, CaseIterable {
+    case menuBar = "ai-chat-01"
     case pip = "sparkles", working = "ai-brain-01", unread = "ai-search"
     case attention = "notification-bubble", compose = "pencil-edit-01"
     case collapse = "arrow-down-right-01", warning = "a-alert-circle"

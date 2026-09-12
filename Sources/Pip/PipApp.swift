@@ -27,7 +27,7 @@ struct PipApp {
     func applicationDidFinishLaunching(_ notification: Notification) {
         panel = PanelController(store: store)
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = PipIconName.pip.image()
+        statusItem.button?.image = PipIconName.menuBar.image()
         statusItem.button?.toolTip = "Pip"
         let menu = NSMenu(); menu.delegate = self; statusItem.menu = menu
         store.onPresentationChange = { [weak self] in self?.panel.present() }
@@ -75,8 +75,9 @@ struct PipApp {
     private func updateStatus() {
         let attention = !store.requests.isEmpty
         let unread = store.conversations.contains { $0.unread }
-        statusItem.button?.image = (attention ? PipIconName.attention : store.busyCount > 0 ? .working : unread ? .unread : .pip).image()
-        statusItem.button?.title = store.busyCount > 0 ? " \(store.busyCount)" : unread ? " ·" : ""
+        statusItem.button?.image = PipIconName.menuBar.image()
+        statusItem.button?.toolTip = attention ? "Pip needs attention" : "Pip"
+        statusItem.button?.title = attention ? " !" : store.busyCount > 0 ? " \(store.busyCount)" : unread ? " ·" : ""
     }
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()

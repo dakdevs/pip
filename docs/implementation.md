@@ -31,7 +31,7 @@ Pip keeps conversation metadata, drafts, and a transcript cache under Applicatio
 
 - [x] 2026-09-11: User confirmed product design; empty workspace inspected; Git initialized; Swift 6.3.3 and macOS26 SDK available.
 - [x] Generated local Codex 0.154 protocol schema for implementation research.
-- [x] Native application and UI, with direct model/reasoning menus and Hugeicons SVGs.
+- [x] Native application and UI, with direct model/reasoning menus and Hugeicons SVGs; `ai-chat-01` is the persistent menu bar icon.
 - [x] Codex transport, subscription model inventory, streamed turns, approvals, and first-turn classifier.
 - [x] Local Parakeet v3 dictation and guided setup with measured download progress.
 - [x] Unit/protocol/state checks, real full AppStore submission, classifier turns, native app launch, SVG appearance, and cached dictation readiness.
